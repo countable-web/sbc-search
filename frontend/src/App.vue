@@ -1,25 +1,21 @@
 <template>
   <v-app>
-    <SbcHeader></SbcHeader>
-
-    <v-content>
-      <HelloWorld />
-    </v-content>
+    <SbcLayout>
+      <HelloWorld></HelloWorld>
+      <div class="test">Test</div>
+    </SbcLayout>
   </v-app>
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import SbcHeader from "sbc-common-components/src/components/SbcHeader.vue";
-
-import HelloWorld from "./components/HelloWorld.vue";
+import SbcLayout from "sbc-common-components/src/components/SbcLayout.vue";
+import HelloWorld from "@/components/HelloWorld.vue";
 
 export default Vue.extend({
-  name: "App",
-
   components: {
-    HelloWorld,
-    SbcHeader
+    SbcLayout,
+    HelloWorld
   },
 
   data: () => ({
@@ -27,3 +23,5 @@ export default Vue.extend({
   })
 });
 </script>
+
+<style lang="scss"></style>
