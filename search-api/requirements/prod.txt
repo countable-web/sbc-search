@@ -13,3 +13,7 @@ xlwt==1.3.0
 Flask-Migrate
 flask-cors
 openpyxl==3.0.3
+<<<<<<< HEAD
+=======
+python-dotenv
+>>>>>>> origin

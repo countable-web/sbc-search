@@ -5,5 +5,9 @@ module.exports = {
         prependData: `@import "~@/assets/scss/variables.scss"; @import "~@/assets/scss/global.scss";`
       }
     }
+  },
+  devServer: {
+    hot: false,
+    liveReload: false
   }
 };

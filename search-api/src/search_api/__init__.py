@@ -2,10 +2,19 @@ from tempfile import NamedTemporaryFile
 import os
 
 from openpyxl import Workbook
+<<<<<<< HEAD
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from sqlalchemy import desc, func
 from functools import reduce
+=======
+from flask import Flask, request, jsonify, send_from_directory, abort
+from flask_cors import CORS
+from sqlalchemy import desc, func
+from functools import reduce
+from dotenv import load_dotenv
+from sqlalchemy.orm.exc import NoResultFound
+>>>>>>> origin
 
 from search_api.models import (
     Corporation,
@@ -18,13 +27,25 @@ from search_api.models import (
     OfficeType,
     OfficesHeld,
     OfficerType,
+<<<<<<< HEAD
 )
 
+=======
+    Event,
+    app, db #TODO, move this out of models.py
+)
+
+load_dotenv(verbose=True)
+>>>>>>> origin
 
 
 def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
     """Return a configured Flask App using the Factory method."""
+<<<<<<< HEAD
     app = Flask(__name__)
+=======
+    #app = Flask(__name__)
+>>>>>>> origin
     # TODO: uncomment all the comments in this block.
     #app.config.from_object(config.CONFIGURATION[run_mode])
     CORS(app)
@@ -62,9 +83,17 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
 
         # Fetching results
         results = _get_corporation_search_results(args)
+<<<<<<< HEAD
 
         # Total number of results
         total_results = results.count()
+=======
+        # raise Exception(results.statement.compile())
+
+        # Total number of results
+        # This is waaay to expensive.
+        #total_results = results.count()
+>>>>>>> origin
 
         # Pagination
         page = int(args.get("page")) if "page" in args else 1
@@ -75,6 +104,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             result_dict = {}
 
             # TODO: switch to marshmallow.
+<<<<<<< HEAD
             result_dict['CORP_NUM'] = row[1]
             result_dict['CORP_NME'] = row[2]
             result_dict['TRANSITION_DT'] = row[3]
@@ -82,11 +112,24 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             result_dict['POSTAL_CD'] = row[5]
             result_dict['CITY'] = row[6]
             result_dict['PROVINCE'] = row[7]
+=======
+            result_dict['corp_num'] = row[0].corp_num
+            result_dict['corp_nme'] = row[0].corp_nme
+            # result_dict['transition_dt'] = row[3]
+            # result_dict['addr_line_1'] = row[4]
+            # result_dict['postal_cd'] = row[5]
+            # result_dict['city'] = row[6]
+            # result_dict['province'] = row[7]
+>>>>>>> origin
 
             corporations.append(result_dict)
 
         # TODO: include corpname and corpparties in serialized child using Marshmallow
+<<<<<<< HEAD
         return jsonify({'results': corporations, 'total': total_results })
+=======
+        return jsonify({'results': corporations })
+>>>>>>> origin
 
 
     @app.route('/corporation/search/export/')
@@ -117,6 +160,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             index = 2
             for row in results:
 
+<<<<<<< HEAD
                 # Corporation.CORP_NUM
                 _ = sheet.cell(column=1, row=index, value=row[1])
                 # CorpName.CORP_NME
@@ -130,6 +174,21 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
                 # Address.CITY
                 _ = sheet.cell(column=6, row=index, value=row[6])
                 # Address.PROVINCE
+=======
+                # Corporation.corp_num
+                _ = sheet.cell(column=1, row=index, value=row[1])
+                # CorpName.corp_nme
+                _ = sheet.cell(column=2, row=index, value=row[2])
+                # Corporation.transition_dt
+                _ = sheet.cell(column=3, row=index, value=row[3])
+                # Address.addr_line_1
+                _ = sheet.cell(column=4, row=index, value=row[4])
+                # Address.postal_cd
+                _ = sheet.cell(column=5, row=index, value=row[5])
+                # Address.city
+                _ = sheet.cell(column=6, row=index, value=row[6])
+                # Address.province
+>>>>>>> origin
                 _ = sheet.cell(column=7, row=index, value=row[7])
 
                 index += 1
@@ -147,6 +206,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
     def corporation(id):
 
         # TODO: move queries to model class.
+<<<<<<< HEAD
         results = Corporation.query\
             .join(CorpState, CorpState.CORP_NUM == Corporation.CORP_NUM)\
             .join(CorpOpState, CorpOpState.STATE_TYP_CD == CorpState.STATE_TYP_CD)\
@@ -188,6 +248,50 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             return jsonify(result_dict)
 
         return {}
+=======
+        result = (Corporation.query
+            .join(CorpState, CorpState.corp_num == Corporation.corp_num)
+            .join(CorpOpState, CorpOpState.state_typ_cd == CorpState.state_typ_cd)
+            # .join(Office, Office.corp_num == Corporation.corp_num)
+            .add_columns(
+                Corporation.corp_num,
+                Corporation.transition_dt,
+                # Office.mailing_addr_id,
+                # Office.office_typ_cd,
+                CorpOpState.state_typ_cd,
+                CorpOpState.full_desc
+            )
+            #.filter(Office.end_event_id == None)
+            .filter(CorpState.end_event_id == None)
+            .filter(Corporation.corp_num == id).one())
+
+        corp = result[0]
+        offices = Office.query.filter_by(corp_num = id)
+        names = CorpName.query.filter_by(corp_num = id).order_by(desc(CorpName.end_event_id))
+
+        output = {}
+        # TODO: switch to marshmallow.
+        output['corp_num'] = int(corp.corp_num)
+        output['transition_dt'] = corp.transition_dt
+        output['offices'] = []
+        for office in offices:
+            output['offices'].append({
+                'addr':_normalize_addr(office.delivery_addr_id), #TODO: get full address.
+                'office_typ_cd': office.office_typ_cd
+            })
+
+        output['state_typ_cd'] = result[3]
+        output['full_desc'] = result[4]
+
+        output['NAMES'] = []
+        for row in names:
+            output['NAMES'].append({
+                'name': row.corp_nme
+            })
+
+        return jsonify(output)
+
+>>>>>>> origin
 
     @app.route('/person/search/')
     def corpparty_search():
@@ -199,7 +303,12 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
         results = _get_corpparty_search_results(args)
 
         # Total number of results
+<<<<<<< HEAD
         total_results = results.count()
+=======
+        # This is waaay to expensive on a large db.
+        #total_results = results.count()
+>>>>>>> origin
 
         # Pagination
         page = int(args.get("page")) if "page" in args else 1
@@ -210,6 +319,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             result_dict = {}
 
             # TODO: switch to marshmallow.
+<<<<<<< HEAD
             result_dict['CORP_PARTY_ID'] = row[1]
             result_dict['FIRST_NME'] = row[2]
             result_dict['MIDDLE_NME'] = row[3]
@@ -228,6 +338,27 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             corp_parties.append(result_dict)
 
         return jsonify({'results': corp_parties, 'total': total_results })
+=======
+            result_dict['corp_party_id'] = int(row[1])
+            result_dict['first_nme'] = row[2]
+            result_dict['middle_nme'] = row[3]
+            result_dict['last_nme'] = row[4]
+            result_dict['appointment_dt'] = row[5]
+            result_dict['cessation_dt'] = row[6]
+            result_dict['corp_num'] = row[7]
+            result_dict['party_typ_id'] = row[8]
+            # result_dict['corp_nme'] = row[8]
+            # result_dict['addr_line_1'] = row[9]
+            # result_dict['postal_cd'] = row[10]
+            # result_dict['city'] = row[11]
+            # result_dict['province'] = row[12]
+            # result_dict['state_typ_cd'] = row[13]
+            # result_dict['full_desc'] = row[14]
+
+            corp_parties.append(result_dict)
+
+        return jsonify({'results': corp_parties })
+>>>>>>> origin
 
 
     @app.route('/person/search/export/')
@@ -264,6 +395,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             index = 2
             for row in results:
 
+<<<<<<< HEAD
                 # CorpParty.CORP_PARTY_ID
                 _ = sheet.cell(column=1, row=index, value=row[1])
                 # CorpParty.FIRST_NME
@@ -289,6 +421,33 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
                 # Address.CITY
                 _ = sheet.cell(column=12, row=index, value=row[11])
                 # Address.PROVINCE
+=======
+                # CorpParty.corp_party_id
+                _ = sheet.cell(column=1, row=index, value=row[1])
+                # CorpParty.first_nme
+                _ = sheet.cell(column=2, row=index, value=row[2])
+                # CorpParty.middle_nme
+                _ = sheet.cell(column=3, row=index, value=row[3])
+                # CorpParty.last_nme
+                _ = sheet.cell(column=4, row=index, value=row[4])
+                # CorpParty.appointment_dt
+                _ = sheet.cell(column=5, row=index, value=row[5])
+                # CorpParty.cessation_dt
+                _ = sheet.cell(column=6, row=index, value=row[6])
+                # CorOpState.full_desc
+                _ = sheet.cell(column=7, row=index, value=row[14])
+                # Corporation.corp_num
+                _ = sheet.cell(column=8, row=index, value=row[7])
+                # CorpName.corp_nme
+                _ = sheet.cell(column=9, row=index, value=row[8])
+                # Address.addr_line_1
+                _ = sheet.cell(column=10, row=index, value=row[9])
+                # Address.postal_cd
+                _ = sheet.cell(column=11, row=index, value=row[10])
+                # Address.city
+                _ = sheet.cell(column=12, row=index, value=row[11])
+                # Address.province
+>>>>>>> origin
                 _ = sheet.cell(column=13, row=index, value=row[12])
 
                 index += 1
@@ -304,6 +463,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
 
     @app.route('/person/<id>')
     def person(id):
+<<<<<<< HEAD
         results = CorpParty.query\
                 .join(Corporation, Corporation.CORP_NUM == CorpParty.CORP_NUM)\
                 .join(CorpState, CorpState.CORP_NUM == Corporation.CORP_NUM)\
@@ -365,11 +525,107 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
                     Address.ADDR_LINE_1,
                 )\
                 .filter(CorpParty.CORP_PARTY_ID==int(corppartyid))
+=======
+        #try:
+
+        result = (CorpParty.query
+            .join(Corporation, Corporation.corp_num == CorpParty.corp_num)
+            .add_columns(\
+                # CorpParty.corp_party_id,
+                # CorpParty.first_nme,
+                # CorpParty.middle_nme,
+                # CorpParty.last_nme,
+                # CorpParty.appointment_dt,
+                # CorpParty.cessation_dt,
+                # CorpParty.corp_num,
+                # CorpParty.delivery_addr_id,
+                # CorpParty.party_typ_cd
+                Corporation.corp_typ_cd,
+                # CorpOpState.state_typ_cd,
+                # CorpOpState.full_desc,
+            ).filter(CorpParty.corp_party_id==int(id))).one()
+
+        person = result[0]
+        result_dict = {}
+        name = CorpName.query.filter(CorpName.corp_num ==  person.corp_num).add_columns(CorpName.corp_nme).filter()[0] #TODO: handle multiple names
+        offices = Office.query.filter(Office.corp_num == person.corp_num).all()
+        addr = _normalize_addr(person.delivery_addr_id)
+        states = CorpState.query.filter(
+            CorpState.corp_num == person.corp_num,
+            CorpState.end_event_id == None).all()
+
+        if offices:
+            # TODO : list all, or just the one from the correct time.
+            corp_addr = _normalize_addr(offices[0].delivery_addr_id)
+        else:
+            corp_addr = ''
+
+
+        # TODO: switch to marshmallow.
+        result_dict['corp_party_id'] = int(person.corp_party_id)
+        result_dict['first_nme'] = person.first_nme
+        result_dict['middle_nme'] = person.middle_nme
+        result_dict['last_nme'] = person.last_nme
+        result_dict['appointment_dt'] = person.appointment_dt
+        result_dict['cessation_dt'] = person.cessation_dt
+        result_dict['corp_num'] = person.corp_num
+        result_dict['corp_nme'] = name.corp_nme
+        result_dict['party_typ_cd'] = person.party_typ_cd
+        result_dict['addr'] = addr
+        result_dict['corp_addr'] = corp_addr
+        result_dict['corp_typ_cd'] = result[1]
+
+        result_dict['states'] = [s.as_dict() for s in states]
+        # result_dict['full_desc'] = results[0][14]
+
+        return jsonify(result_dict)
+
+
+    def _normalize_addr(id):
+        if not id:
+            return ''
+
+        address = Address.query.filter(Address.addr_id == id).add_columns(
+            Address.addr_line_1,
+            Address.addr_line_2,
+            Address.addr_line_3,
+            Address.postal_cd,
+            Address.city,
+            Address.province,
+            Address.country_typ_cd,
+            ).one()[0]
+
+        def fn(accumulator, s):
+            if s:
+                return (accumulator or '') + ', ' + (s or '')
+            else:
+                return accumulator or ''
+
+        return reduce(fn, [address.addr_line_1, address.addr_line_2, address.addr_line_3, address.city, address.province, address.country_typ_cd])
+
+    @app.route('/person/officesheld/<corppartyid>')
+    def officesheld(corppartyid):
+        results = (OfficerType.query
+                .join(OfficesHeld, OfficerType.officer_typ_cd==OfficesHeld.officer_typ_cd)
+                .join(CorpParty, OfficesHeld.corp_party_id == CorpParty.corp_party_id)
+                #.join(Address, CorpParty.mailing_addr_id == Address.addr_id)
+                .join(Event, Event.event_id == CorpParty.start_event_id)
+                .add_columns(
+                    CorpParty.corp_party_id,
+                    OfficerType.officer_typ_cd,
+                    OfficerType.short_desc,
+                    CorpParty.appointment_dt,
+                    Event.event_timestmp
+                )
+                .filter(CorpParty.corp_party_id==int(corppartyid))
+            )
+>>>>>>> origin
 
         offices = []
         for row in results:
             result_dict = {}
 
+<<<<<<< HEAD
             result_dict['CORP_PARTY_ID'] = row[1]
             result_dict['OFFICER_TYP_CD'] = row[2]
             result_dict['SHORT_DESC'] = row[3]
@@ -379,6 +635,49 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
             offices.append(result_dict)
 
         return jsonify({'results': offices})
+=======
+            result_dict['corp_party_id'] = int(row[1])
+            result_dict['officer_typ_cd'] = row[2]
+            result_dict['short_desc'] = row[3]
+            result_dict['appointment_dt'] = row[4]
+            result_dict['year'] = row[5].year
+
+            offices.append(result_dict)
+
+
+        person = CorpParty.query.filter(CorpParty.corp_party_id==int(corppartyid)).one()
+
+        # one or both addr may be null, handle each case.
+        if person.delivery_addr_id or person.mailing_addr_id:
+            if person.delivery_addr_id and person.mailing_addr_id:
+                expr = (CorpParty.delivery_addr_id == person.delivery_addr_id) | \
+                    (CorpParty.mailing_addr_id == person.mailing_addr_id)
+            elif person.delivery_addr_id:
+                expr = (CorpParty.delivery_addr_id == person.delivery_addr_id)
+            elif person.mailing_addr_id:
+                expr = (CorpParty.mailing_addr_id == person.mailing_addr_id)
+
+            same_addr = CorpParty.query.add_columns(
+                Event.event_timestmp
+            ).filter(expr).join(Event, Event.event_id == CorpParty.start_event_id)
+        else:
+            same_addr = []
+
+        same_name_and_company = CorpParty.query.add_columns(
+            Event.event_timestmp
+        ).filter(
+            CorpParty.first_nme.ilike(person.first_nme),
+            CorpParty.last_nme.ilike(person.last_nme),
+            CorpParty.corp_num.ilike(person.corp_num),
+        ).join(Event, Event.event_id == CorpParty.start_event_id)
+
+
+        return jsonify({
+            'offices': offices,
+            'same_addr': [{**s[0].as_dict(), **{'year':int(s[1].year)}} for s in same_addr if s[0].corp_party_id != int(corppartyid)],
+            'same_name_and_company': [{**s[0].as_dict(), **{'year':int(s[1].year)}} for s in same_name_and_company if s[0].corp_party_id != int(corppartyid)],
+        })
+>>>>>>> origin
 
 
 
@@ -389,6 +688,7 @@ def create_app(run_mode=os.getenv('FLASK_ENV', 'production')):
 
 def _get_model_by_field(field_name):
 
+<<<<<<< HEAD
     if field_name in ['FIRST_NME','MIDDLE_NME','LAST_NME','APPOINTMENT_DT','CESSATION_DT']: # CorpParty fields
         return eval('CorpParty')
     elif field_name in ['CORP_NUM']: # Corporation fields
@@ -399,19 +699,42 @@ def _get_model_by_field(field_name):
         return eval('Address')
 
     return None
+=======
+    return CorpParty
+    # [cvo] for performance we only query this one above table for now.
+
+    # if field_name in ['first_nme','middle_nme','last_nme','appointment_dt','cessation_dt']: # CorpParty fields
+    #     return eval('CorpParty')
+    # elif field_name in ['corp_num']: # Corporation fields
+    #     return eval('Corporation')
+    # elif field_name in ['corp_nme']: # CorpName fields
+    #     return eval('CorpName')
+    # elif field_name in ['addr_line_1','postal_cd','city','province']: # Address fields
+    #     return eval('Address')
+
+    #return None
+>>>>>>> origin
 
 
 def _get_filter(field, operator, value):
 
+<<<<<<< HEAD
     if field == 'ANY_NME':
         return (_get_filter('FIRST_NME', operator, value)
             | _get_filter('MIDDLE_NME', operator, value)
             | _get_filter('LAST_NME', operator, value))
+=======
+    if field == 'any_nme':
+        return (_get_filter('first_nme', operator, value)
+            | _get_filter('middle_nme', operator, value)
+            | _get_filter('last_nme', operator, value))
+>>>>>>> origin
 
     model = _get_model_by_field(field)
 
     value = value.lower()
     if model:
+<<<<<<< HEAD
         Field = func.lower(getattr(model, field))
         if operator == 'contains':
             return Field.contains(value)
@@ -421,6 +744,17 @@ def _get_filter(field, operator, value):
             return Field.endswith(value)
         elif operator == 'startswith':
             return Field.startswith(value)
+=======
+        Field = getattr(model, field)
+        if operator == 'contains':
+            return Field.ilike('%' + value + '%')
+        elif operator == 'exact':
+            return Field.ilike(value)
+        elif operator == 'endswith':
+            return Field.ilike('%' + value)
+        elif operator == 'startswith':
+            return Field.ilike(value + '%')
+>>>>>>> origin
         else:
             raise Exception('invalid operator: {}'.format(operator))
     else:
@@ -446,6 +780,7 @@ def _get_corporation_search_results(args):
     query = args["query"]
 
     # TODO: move queries to model class.
+<<<<<<< HEAD
     results = Corporation.query\
         .join(CorpParty, Corporation.CORP_NUM == CorpParty.CORP_NUM)\
         .join(CorpName, Corporation.CORP_NUM == CorpName.CORP_NUM)\
@@ -469,6 +804,35 @@ def _get_corporation_search_results(args):
             (CorpParty.FIRST_NME.contains(query)) |
             (CorpParty.LAST_NME.contains(query)))
 
+=======
+    results = (
+        Corporation.query
+        .join(CorpName, Corporation.corp_num == CorpName.corp_num)
+        # .join(CorpParty, Corporation.corp_num == CorpParty.corp_num)
+        # .join(Office, Office.corp_num == Corporation.corp_num)
+        # .join(Address, Office.mailing_addr_id == Address.addr_id)
+        .with_entities(
+            CorpName.corp_nme,
+            Corporation.corp_num,
+            # Corporation.transition_dt,
+            # Address.addr_line_1,
+            # Address.postal_cd,
+            # Address.city,
+            # Address.province,
+        )
+        # .filter(Office.end_event_id == None)
+        # .filter(CorpName.end_event_id == None)
+    )
+
+
+    results = results.filter(
+            (Corporation.corp_num == query) |
+            (CorpName.corp_nme.ilike('%'+query+'%'))
+            # (CorpParty.first_nme.contains(query)) |
+            # (CorpParty.last_nme.contains(query)))
+    )
+    
+>>>>>>> origin
     return results
 
 
@@ -478,6 +842,7 @@ def _get_corpparty_search_results(args):
 
     You may provide query=<string> for a simple search, OR any number of querystring triples such as
 
+<<<<<<< HEAD
     field=ANY_NME|FIRST_NME|LAST_NME|<any column name>
     &operator=exact|contains|startswith|endswith
     &value=<string>
@@ -486,6 +851,16 @@ def _get_corpparty_search_results(args):
 
     For example, to get everyone who has any name that starts with 'Sky', or last name must be exactly 'Little', do:
     curl "http://localhost/person/search/?field=ANY_NME&operator=startswith&value=Sky&field=LAST_NME&operator=exact&value=Little&mode=ALL"
+=======
+    field=ANY_NME|first_nme|last_nme|<any column name>
+    &operator=exact|contains|startswith|endswith
+    &value=<string>
+    &sort_type=asc|desc
+    &sort_value=ANY_NME|first_nme|last_nme|<any column name>
+
+    For example, to get everyone who has any name that starts with 'Sky', or last name must be exactly 'Little', do:
+    curl "http://localhost/person/search/?field=ANY_NME&operator=startswith&value=Sky&field=last_nme&operator=exact&value=Little&mode=ALL"
+>>>>>>> origin
     """
 
     query = args.get("query")
@@ -507,6 +882,7 @@ def _get_corpparty_search_results(args):
             len(operators),
             len(values)))
 
+<<<<<<< HEAD
     # Zip the lists, so ('LAST_NME', 'FIRST_NME') , ('contains', 'exact'), ('Sky', 'Apple') => (('LAST_NME', 'contains', 'Sky'), ('FIRST_NME', 'exact', 'Apple'))
     clauses = list(zip(fields, operators, values))
 
@@ -541,6 +917,47 @@ def _get_corpparty_search_results(args):
     if query:
         results = results.filter((Corporation.CORP_NUM == query) | (CorpParty.FIRST_NME.contains(query)) | (CorpParty.LAST_NME.contains(query)))
     # Advanced mode - return precise results for a set of clauses.
+=======
+    # Zip the lists, so ('last_nme', 'first_nme') , ('contains', 'exact'), ('Sky', 'Apple') => (('last_nme', 'contains', 'Sky'), ('first_nme', 'exact', 'Apple'))
+    clauses = list(zip(fields, operators, values))
+
+    # TODO: move queries to model class.
+            # TODO: we no longer need this as we want to show all types.
+            #.filter(CorpParty.party_typ_cd.in_(['FIO', 'DIR','OFF']))\
+
+    results = (CorpParty.query
+            # .filter(CorpParty.end_event_id == None)
+            # .filter(CorpName.end_event_id == None)
+            #.join(Corporation, Corporation.corp_num == CorpParty.corp_num)\
+            #.join(CorpState, CorpState.corp_num == Corporation.corp_num)\
+            #.join(CorpOpState, CorpOpState.state_typ_cd == CorpState.state_typ_cd)\
+            #.join(CorpName, Corporation.corp_num == CorpName.corp_num)\
+            #.join(Address, CorpParty.mailing_addr_id == Address.addr_id)\
+            .add_columns(
+                CorpParty.corp_party_id,
+                CorpParty.first_nme,
+                CorpParty.middle_nme,
+                CorpParty.last_nme,
+                CorpParty.appointment_dt,
+                CorpParty.cessation_dt,
+                CorpParty.corp_num,
+                CorpParty.party_typ_cd
+                # Corporation.corp_num,
+                # CorpName.corp_nme,
+                # Address.addr_line_1,
+                # Address.postal_cd,
+                # Address.city,
+                # Address.province,
+                # CorpOpState.state_typ_cd,
+                # CorpOpState.full_desc,
+            ))
+
+    # Simple mode - return reasonable results for a single search string:
+    if query:
+        #results = results.filter((Corporation.corp_num == query) | (CorpParty.first_nme.contains(query)) | (CorpParty.last_nme.contains(query)))
+        results = results.filter(CorpParty.first_nme.ilike(query) | CorpParty.last_nme.ilike(query) | CorpParty.middle_nme.ilike(query))
+        # Advanced mode - return precise results for a set of clauses.
+>>>>>>> origin
     elif clauses:
 
         # Determine if we will combine clauses with OR or AND. mode=ALL means we use AND. Default mode is OR
@@ -562,7 +979,11 @@ def _get_corpparty_search_results(args):
 
     # Sorting
     if sort_type is None:
+<<<<<<< HEAD
         results = results.order_by(CorpParty.LAST_NME)
+=======
+        results = results.order_by(CorpParty.last_nme, CorpParty.corp_num)
+>>>>>>> origin
     else:
         field = _get_sort_field(sort_value)
 
@@ -571,6 +992,11 @@ def _get_corpparty_search_results(args):
         else:
             results = results.order_by(field)
 
+<<<<<<< HEAD
+=======
+    # TODO: uncomment
+    #raise Exception(results.statement.compile())
+>>>>>>> origin
     return results
 
 

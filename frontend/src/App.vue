@@ -1,7 +1,7 @@
 <template>
   <v-app>
     <SbcLayout>
-      <HelloWorld></HelloWorld>
+      <router-view />
     </SbcLayout>
   </v-app>
 </template>
@@ -10,17 +10,11 @@
 import Vue from "vue";
 import "@bcgov/bc-sans/css/BCSans.css";
 import SbcLayout from "sbc-common-components/src/components/SbcLayout.vue";
-import HelloWorld from "@/components/HelloWorld.vue";
 
 export default Vue.extend({
   components: {
-    SbcLayout,
-    HelloWorld
-  },
-
-  data: () => ({
-    //
-  })
+    SbcLayout
+  }
 });
 </script>
 
