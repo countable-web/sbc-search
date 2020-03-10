@@ -84,7 +84,7 @@
               "from": {
                 "kind": "ImageStreamTag",
                 "namespace": "${IMAGE_NAMESPACE}",
-                "name": "${NAME}:${TAG_NAME}"
+                "name": "${NAME}:latest"
               }
             }
           },
