@@ -152,6 +152,79 @@
           }
         }
       }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}-${TAG_NAME}",
+        "creationTimestamp": null,
+        "labels": {
+          "app": "${NAME}-${TAG_NAME}",
+          "app-group": "${APP_GROUP}",
+          "template": "${NAME}-deploy"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8080-tcp",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "deploymentconfig": "${NAME}-${TAG_NAME}-dev"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "${NAME}-${TAG_NAME}",
+        "labels": {
+          "app": "${NAME}-${TAG_NAME}",
+          "app-group": "${APP_GROUP}",
+          "template": "${NAME}-deploy"
+        }
+      },
+      "spec": {
+        "host": "${NAME}-${TAG_NAME}.openshift.countable.ca",
+        "to": {
+          "kind": "Service",
+          "name": "${NAME}-${TAG_NAME}",
+          "weight": 100
+        },
+        "port": {
+          "targetPort": "8080-tcp"
+        },
+        "tls": {
+          "termination": "edge"
+        },
+        "wildcardPolicy": "None"
+      },
+      "status": {
+        "ingress": [
+          {
+            "host": "${NAME}-${TAG_NAME}.openshift.countable.ca",
+            "routerName": "router",
+            "conditions": [
+              {
+                "type": "Admitted",
+                "status": "True"
+              }
+            ],
+            "wildcardPolicy": "None"
+          }
+        ]
+      }
     }
   ],
   "parameters": [
