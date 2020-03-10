@@ -84,7 +84,7 @@
               "from": {
                 "kind": "ImageStreamTag",
                 "namespace": "${IMAGE_NAMESPACE}",
-                "name": "${NAME}:latest"
+                "name": "${NAME}:${OUTPUT_IMAGE_TAG}"
               }
             }
           },
@@ -109,7 +109,7 @@
             "containers": [
               {
                 "name": "${NAME}-${TAG_NAME}",
-                "image": "dev/search-api:latest",
+                "image": "${TAG_NAME}/${NAME}:${OUTPUT_IMAGE_TAG}",
                 "ports": [
                   {
                     "containerPort": 8080,
