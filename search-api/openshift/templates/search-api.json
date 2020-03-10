@@ -224,6 +224,13 @@
       "description": "The tag given to the built image.",
       "required": true,
       "value": "latest"
+    },
+    {
+      "name": "REPLICAS",
+      "displayName": "The number of erplicas to run",
+      "description": "The number of replicas to run in this environment.",
+      "required": true,
+      "value": "1"
     }
   ]
 }
