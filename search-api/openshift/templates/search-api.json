@@ -174,7 +174,7 @@
           }
         ],
         "selector": {
-          "deploymentconfig": "${NAME}-${TAG_NAME}-dev"
+          "deploymentconfig": "${NAME}-${TAG_NAME}"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
