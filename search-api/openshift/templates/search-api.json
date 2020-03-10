@@ -62,7 +62,7 @@
       "displayName": "Name",
       "description": "The name assigned to all of the resources defined in this template.",
       "required": true,
-      "value": "colin-api-base"
+      "value": "search-api"
     },
     {
       "name": "GIT_REPO_URL",
