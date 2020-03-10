@@ -161,7 +161,6 @@
         "creationTimestamp": null,
         "labels": {
           "app": "${NAME}-${TAG_NAME}",
-          "app-group": "${APP_GROUP}",
           "template": "${NAME}-deploy"
         }
       },
@@ -191,7 +190,6 @@
         "name": "${NAME}-${TAG_NAME}",
         "labels": {
           "app": "${NAME}-${TAG_NAME}",
-          "app-group": "${APP_GROUP}",
           "template": "${NAME}-deploy"
         }
       },
