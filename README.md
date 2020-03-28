@@ -6,23 +6,12 @@ BC Registries and Online Services search services
 
 Development
 
-Install Oracle instantclient libs, currently outside Docker.
-
-TODO: automatically download these, but have to deal with changing version numbers:
-
-```
-wget https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-basic-linux.x64-19.6.0.0.0dbru.zip
-unzip instantclient-basic-linux.x64-19.6.0.0.0dbru.zip
-https://download.oracle.com/otn_software/linux/instantclient/19600/instantclient-sdk-linux.x64-19.6.0.0.0dbru.zip
-unzip instantclient-sdk-linux.x64-19.6.0.0.0dbru.zip
-mv instantclient_19_6 instantclient
-```
-
 set docker compose config
 
 ```
 cp dc.dev.yml docker-compose.override.yml
 cp search-web/example.env search-web/.env
+cp search-api/example.env search-api/.env
 docker-compose up
 ```
 
